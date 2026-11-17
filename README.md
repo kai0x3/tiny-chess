@@ -20,3 +20,12 @@ Practice results (kit trials 0, 1 and 2, six games each): Elo 1191 on
 every trial — 2 wins, 1 draw, 3 losses per trial — above the 1,154
 practice floor. Wins came against the depth-2, depth-3 and depth-4
 house engines; draws against depth-4, nodes-250k and nodes-500k.
+
+## Reading the source
+
+The packed form is the entry; the engine it unpacks is plain Python.
+The payload in main.py is one base85 string: decode it with
+base64.b85decode and decompress with lzma to read or audit the full
+engine source. Nothing is obfuscated beyond the packing the 4 KB
+size cap requires, and the unpacked source is what the practice
+trials above were played with.
