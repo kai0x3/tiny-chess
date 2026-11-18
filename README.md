@@ -6,20 +6,40 @@
 
 An original chess engine built for the make.fun tiny-chess-01 bounty
 ("strongest chess engine in 4 KB of Python"). The whole engine is one
-4,009-byte main.py: an lzma + base85 packed payload, Python stdlib only,
+4,091-byte main.py: an lzma + base85 packed payload, Python stdlib only,
 reading no other file.
 
 Design: 0x88 board, negamax alpha-beta with a transposition table,
-quiescence search over captures and check evasions, MVV-LVA and
-transposition-move ordering, and a compact evaluation — material plus
-mirrored piece-square tables, with an endgame king table swapped in as
-the phase drops. It searches a fixed 50,000-node budget per move and
+iterative deepening at a fixed 120,000-node budget per move, quiescence
+search over captures and check evasions, late-move reductions, a check
+extension, MVV-LVA and transposition-move ordering, and a compact
+evaluation — material plus mirrored piece-square tables, a bishop-pair
+bonus, with an endgame king table swapped in as the phase drops. It
 never uses a clock, so trials replay move for move.
 
-Practice results (kit trials 0, 1 and 2, six games each): Elo 1191 on
-every trial — 2 wins, 1 draw, 3 losses per trial — above the 1,154
-practice floor. Wins came against the depth-2, depth-3 and depth-4
-house engines; draws against depth-4, nodes-250k and nodes-500k.
+## Tuning (resubmission)
+
+The first version searched 50,000 nodes per move and scored practice
+Elo 1191 (above the 1,154 floor, below the ~1,365 house-baseline mean).
+This tuned version raises the budget to 120,000 nodes and adds late-move
+reductions, a check extension and a bishop-pair bonus, all inside the
+same 4,096-byte cap (main.py is 4,091 bytes).
+
+Practice results (kit trials, six games each): mean Elo 1493 over three
+trials (1545 / 1654 / 1279) — above the ~1,365 house-baseline mean.
+No crashes, illegal moves or time losses in 15 trials; slowest single
+move 4,179 ms against the 10,000 ms limit.
+
+## Verifying the engine
+
+main.py is the kit's makefun-compress/v1 packing of the engine source:
+one `#coding:l1` line, then `import lzma;exec(lzma.decompress(...))`.
+To audit it, decode the string literal and decompress with lzma — the
+result is plain Python (0x88 board, alpha-beta, transposition table).
+A quick move-generation check: run the source's perft against the
+standard positions (startpos depths 1–3 give 20 / 400 / 8902 nodes;
+Kiwipete gives 48 / 2039 / 97862). The engine only plays when the
+kit sets MAKEFUN_ENV_URL; without it, it exits silently.
 
 ## Reading the source
 
